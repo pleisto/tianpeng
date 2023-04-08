@@ -182,3 +182,5 @@ build/*
 .venv
 .env
 .idea
+response.json
+image/*

@@ -1,3 +1,4 @@
+import image_handler
 import random
 import torch
 import numpy as np
@@ -9,6 +10,8 @@ import cv2
 from PIL import Image
 import uuid
 import re
+import requests
+import json
 
 
 from langchain.agents.initialize import initialize_agent
@@ -251,14 +254,51 @@ class Text2Image:
         print(f"Initializing Text2Image to {device}")
         # self.device = device
         # self.torch_dtype = torch.float16 if 'cuda' in device else torch.float32
-        # self.pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5",
-        #                                                     torch_dtype=self.torch_dtype)
+        self.pipe = self.pipeFn
         # self.pipe.to(device)
         self.a_prompt = "best quality, extremely detailed"
-        self.n_prompt = (
-            "longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, "
-            "fewer digits, cropped, worst quality, low quality"
-        )
+        self.n_prompt = "longbody, lowres, bad anatomy, extra digit, fewer digits, cropped, worst quality, low quality"
+
+    def pipeFn(self, prompt, negative_prompt=None):
+        print("Text 2 image pipeline started")
+        sd_endpoint = os.environ.get("SD_ENDPOINT", "https://8vltmrymi1y5st-7860.proxy.runpod.net/sdapi/v1/txt2img")
+        sd_sampler = os.environ.get("SD_SAMPLER", "DPM++ 2M Karras")
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+
+        # Define the request data as a dictionary
+        data = {
+            "enable_hr": False,
+            "denoising_strength": 0,
+            "firstphase_width": 0,
+            "firstphase_height": 0,
+            "hr_scale": 2,
+            "hr_upscaler": "string",
+            "hr_second_pass_steps": 0,
+            "hr_resize_x": 0,
+            "hr_resize_y": 0,
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "batch_size": 1,
+            "n_iter": 1,
+            "steps": 50,
+            "cfg_scale": 7,
+            "width": 512,
+            "height": 512,
+            "restore_faces": False,
+            "sampler_name": sd_sampler,
+            "sampler_index": sd_sampler,
+        }
+
+        # Make the POST request
+        response = requests.post(sd_endpoint, headers=headers, data=json.dumps(data))
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            img = image_handler.turn_base64_to_png(image_handler.get_imagestr_from_sd_resp(response.content))
+            print("Image retrieved")
+            return [img]
+        else:
+            print("Error:", response.status_code, response.text)
 
     @prompts(
         name="Generate Image From User Input Text",
@@ -269,7 +309,7 @@ class Text2Image:
     def inference(self, text):
         image_filename = os.path.join("image", f"{str(uuid.uuid4())[:8]}.png")
         prompt = text + ", " + self.a_prompt
-        image = self.pipe(prompt, negative_prompt=self.n_prompt).images[0]
+        image = self.pipe(prompt, self.n_prompt)[0]
         image.save(image_filename)
         print(f"\nProcessed Text2Image, Input Text: {text}, Output Image: {image_filename}")
         return image_filename
@@ -364,11 +404,13 @@ class ConversationBot:
     def run_text(self, text, state):
         # self.agent.memory.buffer = cut_dialogue_history(self.agent.memory.buffer(), keep_last_n_words=500)
         res = self.agent({"input": text.strip()})
+        print("result", res, "res output", res["output"])
         res["output"] = res["output"].replace("\\", "/")
-        response = re.sub("(image/[-\w]*.png)", lambda m: f"![](/file={m.group(0)})*{m.group(0)}*", res["output"])
+        response = re.sub("(image/[-\w]*.png)", lambda m: f"![](/file={m.group(0)}) *{m.group(0)}*", res["output"])
         state = state + [(text, response)]
         print(
             f"\nProcessed run_text, Input text: {text}\nCurrent state: {state}\n"
+            f"\nResponse: {response}\n"
             f"Current Memory: {self.agent.memory.buffer}"
         )
         return state, state
@@ -394,7 +436,8 @@ class ConversationBot:
         return state, state, f"{txt} {image_filename} "
 
 
-if __name__ == "__main__":
+def run():
+    # if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # parser.add_argument("--load", type=str, default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
     parser.add_argument("--load", type=str, default="Text2Text_cuda:0,Text2Image_cuda:0")
@@ -403,9 +446,11 @@ if __name__ == "__main__":
     # if len(splits) or splits[0] == "":
     #     raise ValueError("You have to load at least one model!")
 
+    # image_handler.turn_base64_to_png(image_handler.get_imagestr_from_sd_resp_file("./response.json"), "./response.png")
+
     load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
     bot = ConversationBot(load_dict=load_dict)
-    with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}") as demo:
+    with gr.Blocks(css="#chatbot .overflow-y-auto{height:512px}") as demo:
         lang = gr.Radio(choices=["Chinese", "English"], value=None, label="Language")
         chatbot = gr.Chatbot(elem_id="chatbot", label="Camel Bell")
         state = gr.State([])
