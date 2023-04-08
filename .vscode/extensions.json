@@ -1,0 +1,20 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+    "esbenp.prettier-vscode",
+    "github.copilot",
+    "visualstudioexptteam.vscodeintellicode",
+    "aaron-bond.better-comments",
+    "drknoxy.eslint-disable-snippets",
+    "gruntfuggly.todo-tree",
+    "rangav.vscode-thunder-client",
+    "bungcip.better-toml",
+    "rust-lang.rust-analyzer",
+    "dustypomerleau.rust-syntax",
+    "serayuzgur.crates",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff"
+  ]
+}

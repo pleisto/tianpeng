@@ -1,0 +1,83 @@
+{
+  "cSpell.words": ["camelbell"],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.formatOnPaste": true,
+  "editor.renderWhitespace": "all",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "editor.rulers": [120],
+  "files.watcherExclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/tmp": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/target": true
+  },
+  "files.exclude": {
+    "**/__pycache__": true
+  },
+  "files.associations": {
+    ".babelrc": "json",
+    ".eslintrc": "jsonc",
+    ".eslintrc*.json": "jsonc",
+    "CODEOWNERS": "ini"
+  },
+  "search.useIgnoreFiles": true,
+  "search.exclude": {
+    "**/build": true,
+    "**/output": true,
+    "**/dist": true,
+    "**/*.chunk.js": true,
+    "**/*.js.map": true,
+    "**/*.log": true,
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.eslintcache": true,
+    "**/coverage": true,
+    "**/tmp": true,
+    "**/*.snap": true,
+    "/.yarn": true,
+    "/yarn.lock": true,
+    "**/storybook-static": true,
+    "**/target": true
+  },
+  "npm.packageManager": "yarn",
+  "typescript.tsc.autoDetect": "on",
+  "typescript.validate.enable": true,
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "eslint.enable": true,
+  "eslint.format.enable": true,
+  "eslint.codeActionsOnSave.mode": "problems",
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.lintTask.enable": true,
+  "eslint.packageManager": "yarn",
+  "eslint.useESLintClass": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true
+    }
+  },
+  "python.formatting.provider": "black",
+  "python.languageServer": "Pylance"
+}

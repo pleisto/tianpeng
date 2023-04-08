@@ -1,0 +1,48 @@
+{
+  "name": "@pleisto/camelbell",
+  "license": "GPL-3",
+  "private": true,
+  "packageManager": "yarn@3.5.0",
+  "volta": {
+    "node": "19.8.1",
+    "yarn": "1.22.19"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "scripts": {
+    "postinstall": "is-ci || husky install",
+    "lint": "pdm run ruff check camelbell",
+    "commit": "git add . && cz",
+    "precommit": "pdm run ruff check camelbell"
+  },
+  "lint-staged": {
+    "*.{json,yml,yaml,js,jsx,ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.rs": [
+      "cargo fmt --all --"
+    ],
+    "*.py": [
+      "pdm run black --"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^17.5.1",
+    "@commitlint/config-conventional": "^17.4.4",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^8.0.3",
+    "is-ci": "^3.0.1",
+    "lint-staged": "^13.2.1",
+    "prettier": "^2.8.7",
+    "typescript": "^5.0.4"
+  }
+}

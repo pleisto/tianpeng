@@ -1,0 +1,37 @@
+[tool.pdm]
+[tool.pdm.dev-dependencies]
+lint = [
+    "black>=23.3.0",
+    "ruff>=0.0.261",
+]
+
+[project]
+name = "camelbell"
+version = "0.1.0"
+description = "Fine-tuning and Inference Pipeline based on LLaMA, and Multi-modal Chatbot implementation based on it."
+authors = [
+    {name = "Pleisto Inc", email = "engineering@pleisto.com"},
+]
+dependencies = [
+    "transformers>=4.27.4",
+    "gradio>=3.24.1",
+    "torch==1.13.1",
+    "torchvision==0.14.1",
+    "torchaudio==0.13.1",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "GPL-3"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.black]
+target-version = ["py310"]
+line-length = 120
+
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
