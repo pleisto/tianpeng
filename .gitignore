@@ -180,3 +180,5 @@ node_modules/
 build/*
 .ruff_cache
 .venv
+.env
+.idea
