@@ -184,3 +184,5 @@ build/*
 .idea
 response.json
 image/*
+tianpeng/app/image/*
+.DS_Store

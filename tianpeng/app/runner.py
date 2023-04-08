@@ -1,32 +1,48 @@
 import image_handler
 import random
-import torch
-import numpy as np
 import argparse
-import gradio as gr
 import inspect
 import os
 import cv2
-from PIL import Image
 import uuid
 import re
 import requests
 import json
-
+import torch
+import numpy as np
+import gradio as gr
+from PIL import Image
 
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.tools import Tool
 from langchain.memory import ConversationBufferMemory
 from langchain.llms.openai import OpenAI
 from dotenv import load_dotenv
+import uvicorn
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-VISUAL_CHATGPT_PREFIX = """Visual ChatGPT is designed to be able to assist with a wide range of text and visual related tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. Visual ChatGPT is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
+VISUAL_CHATGPT_PREFIX = """Visual ChatGPT is designed to be able to assist with a wide range of text and visual related
+tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics.
+Visual ChatGPT is able to generate human-like text based on the input it receives, allowing it to engage in
+natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
 
-Visual ChatGPT is able to process and understand large amounts of text and images. As a language model, Visual ChatGPT can not directly read images, but it has a list of tools to finish different visual tasks. Each image will have a file name formed as "image/xxx.png", and Visual ChatGPT can invoke different tools to indirectly understand pictures. When talking about images, Visual ChatGPT is very strict to the file name and will never fabricate nonexistent files. When using tools to generate new image files, Visual ChatGPT is also known that the image may not be the same as the user's demand, and will use other visual question answering tools or description tools to observe the real image. Visual ChatGPT is able to use tools in a sequence, and is loyal to the tool observation outputs rather than faking the image content and image file name. It will remember to provide the file name from the last tool observation, if a new image is generated.
+Visual ChatGPT is able to process and understand large amounts of text and images. As a language model, Visual ChatGPT
+can not directly read images, but it has a list of tools to finish different visual tasks. Each image will have a file
+name formed as "image/xxx.png", and Visual ChatGPT can invoke different tools to indirectly understand pictures. When
+talking about images, Visual ChatGPT is very strict to the file name and will never fabricate nonexistent files. When
+using tools to generate new image files, Visual ChatGPT is also known that the image may not be the same as the user's
+demand, and will use other visual question answering tools or description tools to observe the real image.
+Visual ChatGPT is able to use tools in a sequence, and is loyal to the tool observation outputs rather than faking the
+image content and image file name. It will remember to provide the file name from the last tool observation, if a new
+image is generated.
 
-Human may provide new figures to Visual ChatGPT with a description. The description helps Visual ChatGPT to understand this image, but Visual ChatGPT should use tools to finish following tasks, rather than directly imagine from the description.
+Human may provide new figures to Visual ChatGPT with a description. The description helps Visual ChatGPT to understand
+this image, but Visual ChatGPT should use tools to finish following tasks, rather than directly imagine from the
+description.
 
-Overall, Visual ChatGPT is a powerful visual dialogue assistant tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics.
+Overall, Visual ChatGPT is a powerful visual dialogue assistant tool that can help with a wide range of tasks and
+provide valuable insights and information on a wide range of topics.
 
 
 TOOLS:
@@ -51,7 +67,8 @@ Thought: Do I need to use a tool? No
 ```
 """
 
-VISUAL_CHATGPT_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
+VISUAL_CHATGPT_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does
+ not exist.
 You will remember to provide the image file name loyally if it's provided in the last tool observation.
 
 Begin!
@@ -61,24 +78,41 @@ Previous conversation history:
 
 New input: {input}
 Since Visual ChatGPT is a text language model, Visual ChatGPT must use tools to observe images rather than imagination.
-The thoughts and observations are only visible for Visual ChatGPT, Visual ChatGPT should remember to repeat important information in the final response for Human.
+The thoughts and observations are only visible for Visual ChatGPT, Visual ChatGPT should remember to repeat important
+information in the final response for Human.
 Thought: Do I need to use a tool? {agent_scratchpad} Let's think step by step.
 """
 
-VISUAL_CHATGPT_PREFIX_CN = """Visual ChatGPT 旨在能够协助完成范围广泛的文本和视觉相关任务，从回答简单的问题到提供对广泛主题的深入解释和讨论。 Visual ChatGPT 能够根据收到的输入生成类似人类的文本，使其能够进行听起来自然的对话，并提供连贯且与手头主题相关的响应。
+VISUAL_CHATGPT_PREFIX_CN = """Visual ChatGPT 旨在能够协助完成范围广泛的文本和视觉相关任务，
+从回答简单的问题到提供对广泛主题的
+深入解释和讨论。 Visual ChatGPT 能够根据收到的输入生成类似人类的文本，使其能够进行听起来自然的对话，
+并提供连贯且与手头主题相关的响应。
 
-Visual ChatGPT 能够处理和理解大量文本和图像。作为一种语言模型，Visual ChatGPT 不能直接读取图像，但它有一系列工具来完成不同的视觉任务。每张图片都会有一个文件名，格式为“image/xxx.png”，Visual ChatGPT可以调用不同的工具来间接理解图片。在谈论图片时，Visual ChatGPT 对文件名的要求非常严格，绝不会伪造不存在的文件。在使用工具生成新的图像文件时，Visual ChatGPT也知道图像可能与用户需求不一样，会使用其他视觉问答工具或描述工具来观察真实图像。 Visual ChatGPT 能够按顺序使用工具，并且忠于工具观察输出，而不是伪造图像内容和图像文件名。如果生成新图像，它将记得提供上次工具观察的文件名。
+Visual ChatGPT 能够处理和理解大量文本和图像。作为一种语言模型，Visual ChatGPT 不能直接读取图像，
+但它有一系列工具来完成不同的视觉任务。
+每张图片都会有一个文件名，格式为“image/xxx.png”，Visual ChatGPT可以调用不同的工具来间接理解图片。
+在谈论图片时，Visual ChatGPT
+对文件名的要求非常严格，绝不会伪造不存在的文件。在使用工具生成新的图像文件时，
+Visual ChatGPT也知道图像可能与用户需求不一样，会使用
+其他视觉问答工具或描述工具来观察真实图像。 Visual ChatGPT 能够按顺序使用工具，
+并且忠于工具观察输出，而不是伪造图像内容和图像文件名。
+如果生成新图像，它将记得提供上次工具观察的文件名。
 
-Human 可能会向 Visual ChatGPT 提供带有描述的新图形。描述帮助 Visual ChatGPT 理解这个图像，但 Visual ChatGPT 应该使用工具来完成以下任务，而不是直接从描述中想象。有些工具将会返回英文描述，但你对用户的聊天应当采用中文。
+Human 可能会向 Visual ChatGPT 提供带有描述的新图形。描述帮助 Visual ChatGPT 理解这个图像，
+但 Visual ChatGPT
+应该使用工具来完成以下任务，而不是直接从描述中想象。有些工具将会返回英文描述，
+但你对用户的聊天应当采用中文。
 
-总的来说，Visual ChatGPT 是一个强大的可视化对话辅助工具，可以帮助处理范围广泛的任务，并提供关于范围广泛的主题的有价值的见解和信息。
+总的来说，Visual ChatGPT 是一个强大的可视化对话辅助工具，可以帮助处理范围广泛的任务，
+并提供关于范围广泛的主题的有价值的见解和信息。
 
 工具列表:
 ------
 
 Visual ChatGPT 可以使用这些工具:"""
 
-VISUAL_CHATGPT_FORMAT_INSTRUCTIONS_CN = """用户使用中文和你进行聊天，但是工具的参数应当使用英文。如果要调用工具，你必须遵循如下格式:
+VISUAL_CHATGPT_FORMAT_INSTRUCTIONS_CN = """用户使用中文和你进行聊天，
+但是工具的参数应当使用英文。如果要调用工具，你必须遵循如下格式:
 
 ```
 Thought: Do I need to use a tool? Yes
@@ -101,7 +135,9 @@ VISUAL_CHATGPT_SUFFIX_CN = """你对文件名的正确性非常严格，而且�
 开始!
 
 因为Visual ChatGPT是一个文本语言模型，必须使用工具去观察图片而不是依靠想象。
-推理想法和观察结果只对Visual ChatGPT可见，需要记得在最终回复时把重要的信息重复给用户，你只能给用户返回中文句子。我们一步一步思考。在你使用工具时，工具的参数只能是英文。
+推理想法和观察结果只对Visual ChatGPT可见，需要记得在最终回复时把重要的信息重复给用户，
+你只能给用户返回中文句子。我们一步一步思考。
+在你使用工具时，工具的参数只能是英文。
 
 聊天历史:
 {chat_history}
@@ -260,7 +296,7 @@ class Text2Image:
         self.n_prompt = "longbody, lowres, bad anatomy, extra digit, fewer digits, cropped, worst quality, low quality"
 
     def pipeFn(self, prompt, negative_prompt=None):
-        print("Text 2 image pipeline started")
+        print("\nText 2 image pipeline started")
         sd_endpoint = os.environ.get("SD_ENDPOINT", "https://8vltmrymi1y5st-7860.proxy.runpod.net/sdapi/v1/txt2img")
         sd_sampler = os.environ.get("SD_SAMPLER", "DPM++ 2M Karras")
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -338,9 +374,9 @@ class Text2Text:
 class ConversationBot:
     def __init__(self, load_dict):
         # load_dict = {'VisualQuestionAnswering':'cuda:0', 'ImageCaptioning':'cuda:1',...}
-        print(f"Initializing Camel Bell, load_dict={load_dict}")
+        print(f"Initializing TianPeng, load_dict={load_dict}")
         # if "ImageCaptioning" not in load_dict:
-        #     raise ValueError("You have to load ImageCaptioning as a basic function for Camel Bell")
+        #     raise ValueError("You have to load ImageCaptioning as a basic function for TianPeng")
 
         self.models = {}
         # Load Basic Foundation Models
@@ -406,7 +442,7 @@ class ConversationBot:
         res = self.agent({"input": text.strip()})
         print("result", res, "res output", res["output"])
         res["output"] = res["output"].replace("\\", "/")
-        response = re.sub("(image/[-\w]*.png)", lambda m: f"![](/file={m.group(0)}) *{m.group(0)}*", res["output"])
+        response = re.sub("(image/[-\w]*.png)", lambda m: f"![]({m.group(0)}) *{m.group(0)}*", res["output"])
         state = state + [(text, response)]
         print(
             f"\nProcessed run_text, Input text: {text}\nCurrent state: {state}\n"
@@ -439,20 +475,25 @@ class ConversationBot:
 def run():
     # if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--load", type=str, default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
+    # parser.add_argument("--load", type=str, \
+    # default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
     parser.add_argument("--load", type=str, default="Text2Text_cuda:0,Text2Image_cuda:0")
     args = parser.parse_args()
     # splits = args.load.split(",")
     # if len(splits) or splits[0] == "":
     #     raise ValueError("You have to load at least one model!")
 
-    # image_handler.turn_base64_to_png(image_handler.get_imagestr_from_sd_resp_file("./response.json"), "./response.png")
+    # image_handler.turn_base64_to_png(image_handler.get_imagestr_from_sd_resp_file("./response.json"),\
+    # "./response.png")
 
     load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
     bot = ConversationBot(load_dict=load_dict)
-    with gr.Blocks(css="#chatbot .overflow-y-auto{height:512px}") as demo:
+
+    app = FastAPI()
+    demo = gr.Blocks(css="#chatbot .overflow-y-auto{height:512px}")
+    with demo:
         lang = gr.Radio(choices=["Chinese", "English"], value=None, label="Language")
-        chatbot = gr.Chatbot(elem_id="chatbot", label="Camel Bell")
+        chatbot = gr.Chatbot(elem_id="chatbot", label="TianPeng")
         state = gr.State([])
         with gr.Row(visible=False) as input_raws:
             with gr.Column(scale=0.7):
@@ -471,4 +512,8 @@ def run():
         clear.click(bot.memory.clear)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+
+    app.mount("/gradio/image", StaticFiles(directory="image"), name="image")
+    app = gr.mount_gradio_app(app, demo, path="/gradio")
+
+    uvicorn.run(app, host="0.0.0.0", port=7860, log_level="info")

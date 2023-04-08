@@ -9,9 +9,22 @@ Instructions on how to set up the environment for development are available [her
 ### Quickstart
 
 ```bash
+
+# with  pyenv
+pyenv shell 3.10
+
 # Install dependencies
 yarn install
 pdm install # build and install python dependencies
+
+## if conda is to be used
+conda create -n tp python=3.10
+conda activate tp
+conda deactivate
+
+## Run the app
+cd tianpeng/app
+python main.app
 
 ## Commit Changes
 yarn commit # use `yarn commit` instead of `git add . && git commit` to commit changes

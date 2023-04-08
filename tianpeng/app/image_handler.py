@@ -1,7 +1,7 @@
 import base64
-from PIL import Image
 from io import BytesIO
 import json
+from PIL import Image
 
 
 def get_imagestr_from_sd_resp_file(sd_resp_file) -> str:
