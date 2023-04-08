@@ -14,12 +14,14 @@ with open(args.input, "r") as f:
 output_data = []
 
 for item in data:
+    chinese_prompts = ["翻译成中文: ", "翻译下文为中文:", "把下面的内容翻译成中文:", "translate to Chinese:", "请翻译成中文:\n", "请翻译以下内容为中文:"]
+    english_prompts = ["translate to English:", "translate the following to English:", "翻译成英文:\n", "把下面的内容翻译成英文:"]
     conversation = "The conversation between human and AI assistant.\n"
     if random.random() < 0.5:
-        conversation += f"[|Human|] 翻译成中文: {item['english']}\n"
+        conversation += f"[|Human|] {random.choice(chinese_prompts)}{item['english']}\n"
         conversation += f"[|AI|] {item['chinese']}\n"
     else:
-        conversation += f"[|Human|] 翻译成英文: {item['chinese']}\n"
+        conversation += f"[|Human|] {random.choice(english_prompts)}{item['chinese']}\n"
         conversation += f"[|AI|] {item['english']}\n"
     conversation += "[|Human|] "
     output_data.append(conversation)
