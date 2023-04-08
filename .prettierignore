@@ -14,5 +14,4 @@ CHANGELOG.*
 .coverage-cache/
 dist/
 target/
-camelbell/
 tianpeng/

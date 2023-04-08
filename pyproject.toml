@@ -6,20 +6,18 @@ lint = [
 ]
 
 [project]
-name = "camelbell"
+name = "tianpeng"
 version = "0.1.0"
 description = "Fine-tuning and Inference Pipeline based on LLaMA, and Multi-modal Chatbot implementation based on it."
 authors = [
     {name = "Pleisto Inc", email = "engineering@pleisto.com"},
 ]
 dependencies = [
-    "transformers>=4.27.4",
     "gradio>=3.24.1",
     "torch==1.13.1",
-    "torchvision==0.14.1",
-    "torchaudio==0.13.1",
     "langchain==0.0.134",
     "openai",
+    "transformers @ git+https://github.com/huggingface/transformers.git",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

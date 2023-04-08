@@ -14,9 +14,9 @@
   },
   "scripts": {
     "postinstall": "is-ci || husky install",
-    "lint": "pdm run ruff check camelbell",
+    "lint": "pdm run ruff check tianpeng",
     "commit": "git add . && cz",
-    "precommit": "pdm run ruff check camelbell"
+    "precommit": "pdm run ruff check tianpeng"
   },
   "lint-staged": {
     "*.{json,yml,yaml,js,jsx,ts,tsx}": [
