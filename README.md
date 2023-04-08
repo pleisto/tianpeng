@@ -1,4 +1,4 @@
-# camelbell
+# TianPeng
 
 Fine-tuning and Inference Pipeline based on LLaMA, and Multi-modal Chatbot implementation based on it.
 
@@ -19,4 +19,15 @@ yarn commit # use `yarn commit` instead of `git add . && git commit` to commit c
 
 ## License
 
-camelbell is licensed under the [GNU General Public License v3.0](./LICENSE).
+TianPeng is licensed under the [GNU General Public License v3.0](./LICENSE).
+
+### Citation
+
+```bibtex
+@misc{tianpeng,
+  author = {Li, Ding and Xian, Zhang},
+  title = {TianPeng: A Fine-tuning and Inference Pipeline based on LLaMA},
+  howpublished = {\url{https://github.com/pleisto/tianpeng}},
+  year = {2023}
+}
+```

@@ -262,9 +262,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pleisto/camelbell@workspace:.":
+"@pleisto/tianpeng@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@pleisto/camelbell@workspace:."
+  resolution: "@pleisto/tianpeng@workspace:."
   dependencies:
     "@commitlint/cli": ^17.5.1
     "@commitlint/config-conventional": ^17.4.4
