@@ -1,4 +1,8 @@
-from tianpeng.app import image_handler
+from tianpeng.app import image_handler, pdf_handler
+
+import image_handler
+import pdf_handler
+
 import random
 import argparse
 import inspect
@@ -475,6 +479,7 @@ class ConversationBot:
         filename = file.name
         print("Received file. Filename:", filename)
         # print(pdf_handler.extract_text(filename))
+        print(pdf_handler.split_text(pdf_handler.extract_text(filename)))
 
 
 def run():

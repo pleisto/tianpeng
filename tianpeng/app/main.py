@@ -1,5 +1,5 @@
-from tianpeng.app import runner, pg_vector
+from tianpeng.app import runner, pg_vector_util
 
 
-pg_vector.init()
+pg_vector_util.init()
 runner.run()

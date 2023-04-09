@@ -1,4 +1,6 @@
 import PyPDF2
+import pg_vector_util
+from langchain.text_splitter import CharacterTextSplitter
 
 
 def extract_text(filepath):
@@ -25,6 +27,16 @@ def extract_text(filepath):
             text += page_text
 
     return text
+
+
+def split_text(text):
+    text_splitter = CharacterTextSplitter()
+    return text_splitter.split_text(text)
+
+
+def write_textstr_to_db(text):
+    pg_vector_util.pg_conn()
+    split_text(text)
 
 
 # if __name__ == "__main__":
