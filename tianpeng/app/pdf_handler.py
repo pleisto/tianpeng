@@ -1,6 +1,8 @@
 import PyPDF2
 from tianpeng.app import pg_vector_util
 from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores.pgvector import PGVector
 
 
 def extract_text(filepath):
@@ -34,9 +36,24 @@ def split_text(text):
     return text_splitter.split_text(text)
 
 
-def write_textstr_to_db(text):
-    pg_vector_util.pg_conn()
-    split_text(text)
+def write_textstr_to_db(text, collection):
+    CONNECTION_STRING = pg_vector_util.get_conn_string()
+    txts = split_text(text)
+    embeddings = OpenAIEmbeddings()
+
+    db = PGVector.from_texts(
+        embedding=embeddings,
+        texts=txts,
+        collection_name=collection,
+        connection_string=CONNECTION_STRING,
+    )
+    query = "What is frax"
+    docs_with_score = db.similarity_search_with_score(query)
+    for doc, score in docs_with_score:
+        print("-" * 80)
+        print("Score: ", score)
+        print(doc.page_content)
+        print("-" * 80)
 
 
 # if __name__ == "__main__":

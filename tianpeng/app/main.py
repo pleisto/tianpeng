@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 import gradio as gr
 from starlette.responses import RedirectResponse
 from tianpeng.app.runner import ConversationBot
+from tianpeng.app import pg_vector_util
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,6 +18,7 @@ def index():
 
 app.mount("/gradio/image", StaticFiles(directory="image"), name="image")
 
+pg_vector_util.init()
 
 bot = ConversationBot(load_dict={"Text2Text": "remote:0", "Text2Image": "remote:0"})
 demo = gr.Blocks(css="#chatbot .overflow-y-auto{height:512px}", theme=gr.themes.Monochrome())
@@ -46,6 +48,3 @@ with demo:
 
 bot.init_agent()
 app = gr.mount_gradio_app(app, demo, path="/gradio")
-
-
-# pg_vector_util.init()

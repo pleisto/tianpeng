@@ -1,4 +1,4 @@
-from tianpeng.app import image_handler, pdf_handler
+from tianpeng.app import image_handler, pdf_handler, util
 
 import random
 import inspect
@@ -455,4 +455,6 @@ class ConversationBot:
         filename = file.name
         print("Received file. Filename:", filename)
         # print(pdf_handler.extract_text(filename))
-        print(pdf_handler.split_text(pdf_handler.extract_text(filename)))
+        text = pdf_handler.extract_text(filename)
+        collection_name_hash = util.get_short_hash(filename)
+        pdf_handler.write_textstr_to_db(text, collection_name_hash)
