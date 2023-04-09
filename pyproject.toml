@@ -32,6 +32,7 @@ dependencies = [
     "psycopg2>=2.9.6",
     "PyPDF2>=3.0.1",
     "pgvector",
+    "tiktoken",
 ]
 requires-python = ">=3.8.1"
 readme = "README.md"

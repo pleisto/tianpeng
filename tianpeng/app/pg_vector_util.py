@@ -28,6 +28,23 @@ def create_extension(cur):
     cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
 
+def create_pdf_table(cur):
+    cur.execute(
+        """
+      CREATE TABLE IF NOT EXISTS pdf_table (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100),
+          hash VARCHAR(100)
+      )
+  """
+    )
+
+
+def get_pdf_hash(cur, name):
+    cur.execute("SELECT hash FROM pdf_table WHERE name = %s", (name,))
+    return cur.fetchone()[0]
+
+
 def test_init_curs(cur, conn):
     # Create a table
     cur.execute(
@@ -57,6 +74,8 @@ def init():
 
     # create extension
     create_extension(cur)
+
+    create_pdf_table(cur)
 
     # Close cursor and connection
     cur.close()

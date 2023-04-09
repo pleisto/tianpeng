@@ -458,3 +458,9 @@ class ConversationBot:
         text = pdf_handler.extract_text(filename)
         collection_name_hash = util.get_short_hash(filename)
         pdf_handler.write_textstr_to_db(text, collection_name_hash)
+        # return state, state, f"{txt} {collection_name_hash} "
+        print(
+            f"\nProcessed run_file, Input file: {filename}\nCurrent state: {state}\n"
+            f"Current Memory: {self.agent.memory.buffer}"
+        )
+        return state, state, ""

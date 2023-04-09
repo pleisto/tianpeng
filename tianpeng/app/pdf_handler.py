@@ -37,6 +37,7 @@ def split_text(text):
 
 
 def write_textstr_to_db(text, collection):
+    # CONNECTION_STRING = pg_vector_util.pg_conn()
     CONNECTION_STRING = pg_vector_util.get_conn_string()
     txts = split_text(text)
     embeddings = OpenAIEmbeddings()
@@ -47,13 +48,14 @@ def write_textstr_to_db(text, collection):
         collection_name=collection,
         connection_string=CONNECTION_STRING,
     )
-    query = "What is frax"
-    docs_with_score = db.similarity_search_with_score(query)
-    for doc, score in docs_with_score:
-        print("-" * 80)
-        print("Score: ", score)
-        print(doc.page_content)
-        print("-" * 80)
+    db.create_vector_extension()
+    # query = "What is frax"
+    # docs_with_score = db.similarity_search_with_score(query)
+    # for doc, score in docs_with_score:
+    #     print("-" * 80)
+    #     print("Score: ", score)
+    #     print(doc.page_content)
+    #     print("-" * 80)
 
 
 # if __name__ == "__main__":
