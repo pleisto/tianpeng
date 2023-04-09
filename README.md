@@ -30,9 +30,12 @@ python main.app
 yarn commit # use `yarn commit` instead of `git add . && git commit` to commit changes
 ```
 
-## License
+### FineTuning
 
-TianPeng is licensed under the [GNU General Public License v3.0](./LICENSE).
+```bash
+pip install flash-attn
+pdm run torchrun --nproc_per_node=8 tianpeng/finetune/main.py --model_config_file train_config/Llama_config.json --lora_hyperparams_file train_config/lora_hyperparams_llama.json  --use_lora
+```
 
 ### Citation
 
@@ -44,3 +47,7 @@ TianPeng is licensed under the [GNU General Public License v3.0](./LICENSE).
   year = {2023}
 }
 ```
+
+## License
+
+TianPeng is licensed under the [GNU General Public License v3.0](./LICENSE).

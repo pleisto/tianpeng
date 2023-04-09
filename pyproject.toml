@@ -26,7 +26,10 @@ dependencies = [
     "sentencepiece>=0.1.97",
     "wandb>=0.14.2",
     "einops>=0.6.0",
-    "flash-attn>=0.2.8",
+    "opencv-python>=4.7.0.72",
+    "uvicorn>=0.21.1",
+    "python-dotenv>=1.0.0",
+    "psycopg2>=2.9.6",
 ]
 requires-python = ">=3.8.1"
 readme = "README.md"

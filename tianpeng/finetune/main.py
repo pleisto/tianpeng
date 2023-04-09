@@ -8,7 +8,6 @@ from datasets import Dataset
 import transformers
 import json
 from transformers import LlamaForCausalLM, LlamaTokenizer
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import (
     prepare_model_for_int8_training,
     LoraConfig,
@@ -84,16 +83,9 @@ def train(args):
             device_map=device_map,
         )
         tokenizer = LlamaTokenizer.from_pretrained(model_name_or_path, cache_dir="./cache")
-    elif model_type.lower() == "bloom":
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path,
-            load_in_8bit=load_in_8bit,
-            device_map=device_map,
-        )
-        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
-    # tokenizer.pad_token_id = 0
-    # tokenizer.padding_side = "left"
+    tokenizer.pad_token_id = 0
+    tokenizer.padding_side = "left"
 
     def tokenize(prompt, add_eos_token=True):
         result = tokenizer(
@@ -145,7 +137,6 @@ def train(args):
         data = json.load(f)
         random.shuffle(data)
     data = Dataset.from_dict({"input": data})
-    print(data)
 
     val_set_size = 0
     training_nums = len(data["input"])
@@ -178,10 +169,10 @@ def train(args):
             eval_steps=model_config["eval_steps"] if val_set_size > 0 else None,
             save_steps=model_config["save_steps"],
             output_dir=output_dir,
-            save_total_limit=3,
+            save_total_limit=4,
+            report_to="wandb",
             load_best_model_at_end=False,
             ddp_find_unused_parameters=False if ddp else None,
-            deepspeed=args.deepspeed if not args.use_lora else None,
             group_by_length=True,
         ),
         data_collator=transformers.DataCollatorForSeq2Seq(
@@ -212,7 +203,6 @@ def train(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_config_file", type=str, required=True)
-    parser.add_argument("--deepspeed", type=str, help="deepspeed config")
     parser.add_argument(
         "--resume_from_checkpoint", action="store_true", help="either training checkpoint or final adapter"
     )
