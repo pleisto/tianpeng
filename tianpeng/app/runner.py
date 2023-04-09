@@ -471,6 +471,11 @@ class ConversationBot:
         )
         return state, state, f"{txt} {image_filename} "
 
+    def run_file(self, file, state, txt):
+        filename = file.name
+        print("Received file. Filename:", filename)
+        # print(pdf_handler.extract_text(filename))
+
 
 def run():
     # if __name__ == "__main__":
@@ -496,19 +501,22 @@ def run():
         chatbot = gr.Chatbot(elem_id="chatbot", label="TianPeng")
         state = gr.State([])
         with gr.Row(visible=False) as input_raws:
-            with gr.Column(scale=0.7):
+            with gr.Column(scale=0.61):
                 txt = gr.Textbox(show_label=False, placeholder="Enter text and press enter, or upload an image").style(
                     container=False
                 )
-            with gr.Column(scale=0.15, min_width=0):
+            with gr.Column(scale=0.13, min_width=0):
                 clear = gr.Button("Clear")
-            with gr.Column(scale=0.15, min_width=0):
+            with gr.Column(scale=0.13, min_width=0):
                 btn = gr.UploadButton(label="🖼️", file_types=["image"])
+            with gr.Column(scale=0.13, min_width=0):
+                file_btn = gr.UploadButton(label="file", file_types=["file"], elem_id="file")
 
         lang.change(bot.init_agent, [lang], [input_raws, lang, txt, clear])
         txt.submit(bot.run_text, [txt, state], [chatbot, state])
         txt.submit(lambda: "", None, txt)
         btn.upload(bot.run_image, [btn, state, txt], [chatbot, state, txt])
+        file_btn.upload(bot.run_file, [file_btn, state, txt], [chatbot, state, txt])
         clear.click(bot.memory.clear)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
