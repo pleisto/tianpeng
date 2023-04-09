@@ -1,10 +1,6 @@
 from tianpeng.app import image_handler, pdf_handler
 
-import image_handler
-import pdf_handler
-
 import random
-import argparse
 import inspect
 import os
 import cv2
@@ -14,17 +10,12 @@ import requests
 import json
 import torch
 import numpy as np
-import gradio as gr
 from PIL import Image
 
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.tools import Tool
 from langchain.memory import ConversationBufferMemory
 from langchain.llms.openai import OpenAI
-from dotenv import load_dotenv
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 
 TIANPENG_PREFIX = """TianPeng is designed to be able to assist with a wide range of text and visual related
 tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics.
@@ -151,7 +142,6 @@ Thought: Do I need to use a tool? {agent_scratchpad}
 """
 
 
-load_dotenv()
 os.makedirs("image", exist_ok=True)
 
 
@@ -301,7 +291,7 @@ class Text2Image:
 
     def pipeFn(self, prompt, negative_prompt=None):
         print("\nText 2 image pipeline started")
-        sd_endpoint = os.environ.get("SD_ENDPOINT", "https://8vltmrymi1y5st-7860.proxy.runpod.net/sdapi/v1/txt2img")
+        sd_endpoint = os.environ.get("SD_ENDPOINT")
         sd_sampler = os.environ.get("SD_SAMPLER", "DPM++ 2M Karras")
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
@@ -344,7 +334,8 @@ class Text2Image:
         name="Generate Image From User Input Text",
         description="useful when you want to generate an image from a user input text and save it to a file. "
         "like: generate an image of an object or something, or generate an image that includes some objects. "
-        "The input to this tool should be a string, representing the text used to generate image. ",
+        "The input to this tool should be a string, representing the english text used to generate image."
+        "If the input is not in English, please translate it into English and then use it as output",
     )
     def inference(self, text):
         image_filename = os.path.join("image", f"{str(uuid.uuid4())[:8]}.png")
@@ -407,24 +398,15 @@ class ConversationBot:
         self.llm = getLlm()
         self.memory = ConversationBufferMemory(memory_key="chat_history", output_key="output")
 
-    def init_agent(self, lang):
+    def init_agent(self):
         self.memory.clear()  # clear previous history
-        if lang == "English":
-            PREFIX, FORMAT_INSTRUCTIONS, SUFFIX = (
-                TIANPENG_PREFIX,
-                TIANPENG_FORMAT_INSTRUCTIONS,
-                TIANPENG_SUFFIX,
-            )
-            place = "Enter text and press enter, or upload an image"
-            label_clear = "Clear"
-        else:
-            PREFIX, FORMAT_INSTRUCTIONS, SUFFIX = (
-                TIANPENG_PREFIX_CN,
-                TIANPENG_FORMAT_INSTRUCTIONS_CN,
-                TIANPENG_SUFFIX_CN,
-            )
-            place = "输入文字并回车，或者上传图片"
-            label_clear = "清除"
+
+        PREFIX, FORMAT_INSTRUCTIONS, SUFFIX = (
+            TIANPENG_PREFIX_CN,
+            TIANPENG_FORMAT_INSTRUCTIONS_CN,
+            TIANPENG_SUFFIX_CN,
+        )
+
         self.agent = initialize_agent(
             self.tools,
             self.llm,
@@ -433,12 +415,6 @@ class ConversationBot:
             memory=self.memory,
             return_intermediate_steps=True,
             agent_kwargs={"prefix": PREFIX, "format_instructions": FORMAT_INSTRUCTIONS, "suffix": SUFFIX},
-        )
-        return (
-            gr.update(visible=True),
-            gr.update(visible=False),
-            gr.update(placeholder=place),
-            gr.update(value=label_clear),
         )
 
     def run_text(self, text, state):
@@ -480,53 +456,3 @@ class ConversationBot:
         print("Received file. Filename:", filename)
         # print(pdf_handler.extract_text(filename))
         print(pdf_handler.split_text(pdf_handler.extract_text(filename)))
-
-
-def run():
-    # if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    # parser.add_argument("--load", type=str, \
-    # default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
-    parser.add_argument("--load", type=str, default="Text2Text_cuda:0,Text2Image_cuda:0")
-    args = parser.parse_args()
-    # splits = args.load.split(",")
-    # if len(splits) or splits[0] == "":
-    #     raise ValueError("You have to load at least one model!")
-
-    # image_handler.turn_base64_to_png(image_handler.get_imagestr_from_sd_resp_file("./response.json"),\
-    # "./response.png")
-
-    load_dict = {e.split("_")[0].strip(): e.split("_")[1].strip() for e in args.load.split(",")}
-    bot = ConversationBot(load_dict=load_dict)
-
-    app = FastAPI()
-    demo = gr.Blocks(css="#chatbot .overflow-y-auto{height:512px}")
-    with demo:
-        lang = gr.Radio(choices=["Chinese", "English"], value=None, label="Language")
-        chatbot = gr.Chatbot(elem_id="chatbot", label="TianPeng")
-        state = gr.State([])
-        with gr.Row(visible=False) as input_raws:
-            with gr.Column(scale=0.61):
-                txt = gr.Textbox(show_label=False, placeholder="Enter text and press enter, or upload an image").style(
-                    container=False
-                )
-            with gr.Column(scale=0.13, min_width=0):
-                clear = gr.Button("Clear")
-            with gr.Column(scale=0.13, min_width=0):
-                btn = gr.UploadButton(label="🖼️", file_types=["image"])
-            with gr.Column(scale=0.13, min_width=0):
-                file_btn = gr.UploadButton(label="file", file_types=["file"], elem_id="file")
-
-        lang.change(bot.init_agent, [lang], [input_raws, lang, txt, clear])
-        txt.submit(bot.run_text, [txt, state], [chatbot, state])
-        txt.submit(lambda: "", None, txt)
-        btn.upload(bot.run_image, [btn, state, txt], [chatbot, state, txt])
-        file_btn.upload(bot.run_file, [file_btn, state, txt], [chatbot, state, txt])
-        clear.click(bot.memory.clear)
-        clear.click(lambda: [], None, chatbot)
-        clear.click(lambda: [], None, state)
-
-    app.mount("/gradio/image", StaticFiles(directory="image"), name="image")
-    app = gr.mount_gradio_app(app, demo, path="/gradio")
-
-    uvicorn.run(app, host="0.0.0.0", port=7860, log_level="info")

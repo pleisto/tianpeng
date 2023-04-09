@@ -1,5 +1,5 @@
 import PyPDF2
-import pg_vector_util
+from tianpeng.app import pg_vector_util
 from langchain.text_splitter import CharacterTextSplitter
 
 
